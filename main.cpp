@@ -4,6 +4,7 @@
 
 void framebuffer_size_callback(GLFWwindow *window,int width,int height);
 void update(GLFWwindow *window);
+void key_callback(GLFWwindow *window,int key, int scancode, int action, int mods);
 
 int main() {
     glfwInit();
@@ -19,9 +20,11 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
-    gladLoadGL(); // window crashes without this
-    glViewport(0,0,800,600);
+//    gladLoadGL(); // window crashes without this
+//    glViewport(0,0,800,600);
     glfwSetFramebufferSizeCallback(window,framebuffer_size_callback);
+
+    glfwSetKeyCallback(window,key_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout<<"failed to initialize GLAD"<<std::endl;
@@ -46,4 +49,13 @@ void framebuffer_size_callback(GLFWwindow *window,int width,int height){
 
 void update(GLFWwindow *window){
 
+}
+
+void key_callback(GLFWwindow *window,int key, int scancode, int action, int mods){
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
+        glfwSetWindowShouldClose(window, true);
+    }
+    if (key == GLFW_KEY_W && action == GLFW_PRESS){
+        std::cerr<<"W";
+    }
 }
