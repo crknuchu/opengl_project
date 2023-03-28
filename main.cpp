@@ -11,8 +11,14 @@
 
 void framebuffer_size_callback(GLFWwindow *window,int width,int height);
 void update(GLFWwindow *window);
-void key_callback(GLFWwindow *window,int key, int scancode, int action, int mods);
+void processInput(GLFWwindow *window);
 
+glm::vec3 cameraPos = glm::vec3(0,0,3);
+glm::vec3 cameraFront = glm::vec3(0,0,-1);
+glm::vec3 cameraUp = glm::vec3(0,1,0);
+
+float deltaTime = 0.0f;	// time between current frame and last frame
+float lastFrame = 0.0f;
 
 int main() {
     glfwInit();
@@ -30,7 +36,6 @@ int main() {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window,framebuffer_size_callback);
 
-    glfwSetKeyCallback(window,key_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout<<"failed to initialize GLAD"<<std::endl;
@@ -165,9 +170,15 @@ int main() {
     glBindVertexArray(0);
 
     while(!glfwWindowShouldClose(window)){
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         glfwPollEvents();
         glClearColor(0.2,0.1,0.3,1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        processInput(window);
 
         shader.use();
 
@@ -175,11 +186,9 @@ int main() {
         glm::mat4 view          = glm::mat4(1.0f);
         glm::mat4 projection    = glm::mat4(1.0f);
 
-        float radius = 7;
-        float camX = sin(glfwGetTime()) * radius;
-        float camZ = cos(glfwGetTime()) * radius;
-        view = glm::lookAt(glm::vec3(camX,0,camZ),glm::vec3(0.0f, 0.0f, 0.0f),glm::vec3(0.0f, 1.0f, 0.0f));
-
+        view = glm::lookAt(cameraPos,cameraFront + cameraPos,cameraUp);
+//        view = glm::lookAt(glm::vec3(camX,0,camZ),glm::vec3(0.0f, 0.0f, 0.0f),glm::vec3(0.0f, 1.0f, 0.0f));
+//
         model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
         projection = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 100.0f);
         // retrieve the matrix uniform locations
@@ -190,6 +199,8 @@ int main() {
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
         // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
         shader.setMat4("projection", projection);
+
+
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D,tex0);
@@ -225,11 +236,20 @@ void update(GLFWwindow *window){
 
 }
 
-void key_callback(GLFWwindow *window,int key, int scancode, int action, int mods){
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
+void processInput(GLFWwindow *window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    }
-    if (key == GLFW_KEY_W && action == GLFW_PRESS){
-        std::cerr<<"W";
-    }
+
+    const float cameraSpeed = 2.5 * deltaTime;
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cameraPos += cameraFront * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cameraPos -= cameraFront * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cameraPos += glm::normalize(glm::cross(cameraFront,cameraUp)) * cameraSpeed;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cameraPos -= glm::normalize(glm::cross(cameraFront,cameraUp)) * cameraSpeed;
 }
+
