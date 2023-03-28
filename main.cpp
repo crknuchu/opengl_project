@@ -86,6 +86,8 @@ int main() {
 //            1, 2, 3   // second Triangle
 //    };
 
+    glEnable(GL_DEPTH_TEST);
+
     Shader shader("/home/matf-racunarska-grafika/Desktop/rg_projekat/resources/shaders/vertexShader.vs",
                   "/home/matf-racunarska-grafika/Desktop/rg_projekat/resources/shaders/fragmentShader.fs");
 
@@ -144,16 +146,6 @@ int main() {
     projection = glm::perspective(glm::radians(45.0f),(float)800/600,0.1f,100.f);
 
     shader.use();
-//    shader.setUniform1i("t0",0);
-    unsigned int modelLoc = glGetUniformLocation(shader.getId(),"model");
-    unsigned int viewLoc = glGetUniformLocation(shader.getId(),"view");
-
-
-    //    glUniformMatrix4fv(locationId,1, GL_FALSE,glm::value_ptr(m));
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-//    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    shader.setMat4("projection",projection);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -162,9 +154,25 @@ int main() {
     while(!glfwWindowShouldClose(window)){
         glfwPollEvents();
         glClearColor(0.2,0.1,0.3,1);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.use();
+
+        glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        glm::mat4 view          = glm::mat4(1.0f);
+        glm::mat4 projection    = glm::mat4(1.0f);
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
+        view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        projection = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 100.0f);
+        // retrieve the matrix uniform locations
+        unsigned int modelLoc = glGetUniformLocation(shader.getId(), "model");
+        unsigned int viewLoc  = glGetUniformLocation(shader.getId(), "view");
+        // pass them to the shaders (3 different ways)
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+        // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+        shader.setMat4("projection", projection);
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D,tex0);
 
