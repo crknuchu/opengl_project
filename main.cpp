@@ -99,13 +99,24 @@ int main() {
     stbi_image_free(data);
 
     // scale -> translate
-    glm::mat4 m = glm::mat4(1.0f);
-    m = glm::scale(m, glm::vec3(0.1,0.1,1.0));
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 projection = glm::mat4(1.0f);
+    model = glm::rotate(model, glm::radians(-55.0f),glm::vec3(1,0,0));
+    view = glm::translate(view, glm::vec3(0,0,-3));
+    projection = glm::perspective(glm::radians(45.0f),(float)800/600,0.1f,100.f);
 
     shader.use();
 //    shader.setUniform1i("t0",0);
-    int locationId = glGetUniformLocation(shader.getId(),"model");
-    glUniformMatrix4fv(locationId,1, GL_FALSE,glm::value_ptr(m));
+    unsigned int modelLoc = glGetUniformLocation(shader.getId(),"model");
+    unsigned int viewLoc = glGetUniformLocation(shader.getId(),"view");
+
+
+    //    glUniformMatrix4fv(locationId,1, GL_FALSE,glm::value_ptr(m));
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+//    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    shader.setMat4("projection",projection);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 

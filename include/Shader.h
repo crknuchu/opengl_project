@@ -6,6 +6,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 std::string readFileContents(std::string path){
     std::ifstream in(path);
@@ -75,6 +78,12 @@ public:
         int uniformId = glGetUniformLocation(m_Id,name.c_str());
         glUniform1i(uniformId,val);
     }
+
+    void setMat4(std::string name,glm::mat4 mat){
+        int uniformId = glGetUniformLocation(m_Id,name.c_str());
+        glUniformMatrix4fv(uniformId,1,GL_FALSE,&mat[0][0]);
+    }
+
 
     void deleteProgram(){
         glDeleteProgram(m_Id);
