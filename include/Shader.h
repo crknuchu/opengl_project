@@ -79,6 +79,9 @@ public:
     void deleteProgram(){
         glDeleteProgram(m_Id);
     }
+    unsigned getId(){
+        return m_Id;
+    }
 };
 
 #endif //RG_PROJEKAT_SHADER_H

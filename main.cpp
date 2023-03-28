@@ -4,8 +4,9 @@
 #include <GLFW/glfw3.h>
 #include "include/Shader.h"
 #include "include/stb_image.h"
-#include <filesystem>
-#include <unistd.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 
 void framebuffer_size_callback(GLFWwindow *window,int width,int height);
@@ -97,9 +98,14 @@ int main() {
 
     stbi_image_free(data);
 
-    shader.use();
-    shader.setUniform1i("t0",0);
+    // scale -> translate
+    glm::mat4 m = glm::mat4(1.0f);
+    m = glm::scale(m, glm::vec3(0.1,0.1,1.0));
 
+    shader.use();
+//    shader.setUniform1i("t0",0);
+    int locationId = glGetUniformLocation(shader.getId(),"model");
+    glUniformMatrix4fv(locationId,1, GL_FALSE,glm::value_ptr(m));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
