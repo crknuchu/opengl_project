@@ -9,6 +9,6 @@ find_package(OpenGL REQUIRED)
 
 add_subdirectory(glad/)
 
-add_executable(rg_projekat main.cpp include/Shader.h)
+add_executable(rg_projekat main.cpp include/Shader.h include/Camera.h)
 
 target_link_libraries(rg_projekat glad glfw OpenGL::GL pthread X11 Xrandr Xi dl)
