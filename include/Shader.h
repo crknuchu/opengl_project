@@ -78,6 +78,10 @@ public:
         int uniformId = glGetUniformLocation(m_Id,name.c_str());
         glUniform1i(uniformId,val);
     }
+    void setFloat(std::string name,float val){
+        int uniformId = glGetUniformLocation(m_Id,name.c_str());
+        glUniform1f(uniformId,val);
+    }
 
     void setMat4(std::string name,glm::mat4 mat){
         int uniformId = glGetUniformLocation(m_Id,name.c_str());
