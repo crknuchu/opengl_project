@@ -84,6 +84,16 @@ public:
         glUniformMatrix4fv(uniformId,1,GL_FALSE,&mat[0][0]);
     }
 
+    void setVec3(std::string name,glm::vec3 val){
+        int uniformId = glGetUniformLocation(m_Id,name.c_str());
+        glUniform3fv(uniformId,1,&val[0]);
+    }
+    void setVec3(std::string name,float x,float y,float z){
+        int uniformId = glGetUniformLocation(m_Id,name.c_str());
+        glUniform3f(uniformId,x,y,z);
+    }
+
+
 
     void deleteProgram(){
         glDeleteProgram(m_Id);
