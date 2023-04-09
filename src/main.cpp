@@ -20,6 +20,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
@@ -43,6 +44,38 @@ struct PointLight {
     float quadratic;
 };
 
+struct ProgramState {
+    bool ImGuiEnabled = false;
+    glm::vec3 clearColor = glm::vec3(0);
+
+    void LoadFromDisk(std::string path);
+    void SaveToDisk(std::string path);
+};
+
+void ProgramState::LoadFromDisk(std::string path) {
+    std::ifstream in(path);
+    if(in){
+        in >> ImGuiEnabled
+            >> clearColor.r
+            >> clearColor.g
+            >> clearColor.b;
+    }
+    std::cerr<<"AAAAAAAAAAAAAAAAAAAa";
+}
+
+void ProgramState::SaveToDisk(std::string path) {
+    std::ofstream out(path);
+    out << ImGuiEnabled << '\n'
+        << clearColor.r << '\n'
+        << clearColor.g << '\n'
+        << clearColor.b;
+    std::cerr<<"BBBBBBBBBBBBBBBBB";
+}
+
+ProgramState* programState;
+
+void DrawImGui(ProgramState* programState);
+
 int main()
 {
     glfwInit();
@@ -62,6 +95,7 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    glfwSetKeyCallback(window, key_callback);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); //camera goes crazy if this is set to GLFW_CURSOR_DISABLED
 
@@ -75,11 +109,14 @@ int main()
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
 
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window,true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
+
+    programState = new ProgramState;
+    programState->LoadFromDisk("resources/programState.txt");
 
     glEnable(GL_DEPTH_TEST);
 
@@ -104,11 +141,7 @@ int main()
 
         processInput(window);
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+        glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ourShader.use();
@@ -132,23 +165,20 @@ int main()
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
-        {
-            ImGui::Begin("Test Window");
-            ImGui::Text("Hello World");
-            ImGui::End();
-        }
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        if (programState->ImGuiEnabled)
+            DrawImGui(programState);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
+    programState->SaveToDisk("resources/programState.txt");
+
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
     glfwTerminate();
+    delete programState;
     return 0;
 }
 
@@ -189,11 +219,43 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
     lastX = xpos;
     lastY = ypos;
-
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    if(programState->ImGuiEnabled == false)
+        camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+void DrawImGui(ProgramState* programState){
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    {
+        static float f = 0.0;
+        ImGui::Begin("Test Window");
+        ImGui::Text("Hello World");
+        ImGui::DragFloat("demo slider",&f,0.05,0.0,1.0);
+        ImGui::ColorEdit3("background color",(float*)&programState->clearColor);
+        ImGui::End();
+    }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+    if (key == GLFW_KEY_F1 && action == GLFW_PRESS){
+        programState->ImGuiEnabled = !(programState->ImGuiEnabled);
+//        if (programState->ImGuiEnabled) {
+//            glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
+//            return;
+//        }
+//        else {
+//            glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+//            return;
+//        }
+    }
 }
