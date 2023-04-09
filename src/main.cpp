@@ -44,34 +44,49 @@ struct PointLight {
 };
 
 struct ProgramState {
-    bool ImGuiEnabled = false;
     glm::vec3 clearColor = glm::vec3(0);
-
+    bool ImGuiEnabled = false;
     Camera camera;
-
+    bool CameraMouseMovementUpdateEnabled = true;
+    glm::vec3 backpackPosition = glm::vec3(0.0f);
+    float backpackScale = 1.0f;
+    PointLight pointLight;
     ProgramState()
-    : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
+            : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
 
-    void LoadFromDisk(std::string path);
-    void SaveToDisk(std::string path);
+    void SaveToFile(std::string filename);
+
+    void LoadFromFile(std::string filename);
 };
 
-void ProgramState::LoadFromDisk(std::string path) {
+void ProgramState::LoadFromFile(std::string path) {
     std::ifstream in(path);
     if(in){
         in >> ImGuiEnabled
             >> clearColor.r
             >> clearColor.g
-            >> clearColor.b;
+            >> clearColor.b
+            >> camera.Position.x
+            >> camera.Position.y
+            >> camera.Position.z
+            >> camera.Front.x
+            >> camera.Front.y
+            >> camera.Front.z;
     }
 }
 
-void ProgramState::SaveToDisk(std::string path) {
+void ProgramState::SaveToFile(std::string path) {
     std::ofstream out(path);
     out << ImGuiEnabled << '\n'
         << clearColor.r << '\n'
         << clearColor.g << '\n'
-        << clearColor.b;
+        << clearColor.b << '\n'
+        << camera.Position.x << '\n'
+        << camera.Position.y << '\n'
+        << camera.Position.z << '\n'
+        << camera.Front.x << '\n'
+        << camera.Front.y << '\n'
+        << camera.Front.z << '\n';
 }
 
 ProgramState* programState;
@@ -118,7 +133,7 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
     programState = new ProgramState;
-    programState->LoadFromDisk("resources/programState.txt");
+    programState->LoadFromFile("resources/programState.txt");
 
     glEnable(GL_DEPTH_TEST);
 
@@ -126,14 +141,14 @@ int main()
 
     Model ourModel(FileSystem::getPath("resources/objects/backpack/backpack.obj"));
 
-    PointLight pointLight;
-    pointLight.position = glm::vec3(4,4,0);
-    pointLight.ambient = glm::vec3(0.4,0.4,0.2);
-    pointLight.diffuse = glm::vec3(0.5,0.6,1.0);
-    pointLight.specular = glm::vec3(1.0);
-    pointLight.constant = 1.0;
-    pointLight.linear = 0.09;
-    pointLight.quadratic = 0.032;
+//    PointLight pointLight;
+    programState->pointLight.position = glm::vec3(4,4,0);
+    programState->pointLight.ambient = glm::vec3(0.4,0.4,0.2);
+    programState->pointLight.diffuse = glm::vec3(0.5,0.6,1.0);
+    programState->pointLight.specular = glm::vec3(1.0);
+    programState->pointLight.constant = 1.0;
+    programState->pointLight.linear = 0.09;
+    programState->pointLight.quadratic = 0.032;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -148,13 +163,13 @@ int main()
 
         ourShader.use();
 
-        ourShader.setVec3("pointLight.position",pointLight.position);
-        ourShader.setVec3("pointLight.ambient",pointLight.ambient);
-        ourShader.setVec3("pointLight.diffuse",pointLight.diffuse);
-        ourShader.setVec3("pointLight.specular",pointLight.specular);
-        ourShader.setFloat("pointLight.constant",pointLight.constant);
-        ourShader.setFloat("pointLight.linear",pointLight.linear);
-        ourShader.setFloat("pointLight.quadratic",pointLight.quadratic);
+        ourShader.setVec3("pointLight.position",programState->pointLight.position);
+        ourShader.setVec3("pointLight.ambient",programState->pointLight.ambient);
+        ourShader.setVec3("pointLight.diffuse",programState->pointLight.diffuse);
+        ourShader.setVec3("pointLight.specular",programState->pointLight.specular);
+        ourShader.setFloat("pointLight.constant",programState->pointLight.constant);
+        ourShader.setFloat("pointLight.linear",programState->pointLight.linear);
+        ourShader.setFloat("pointLight.quadratic",programState->pointLight.quadratic);
 
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
@@ -174,7 +189,7 @@ int main()
         glfwPollEvents();
     }
 
-    programState->SaveToDisk("resources/programState.txt");
+    programState->SaveToFile("resources/programState.txt");
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -235,12 +250,29 @@ void DrawImGui(ProgramState* programState){
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+
     {
-        static float f = 0.0;
-        ImGui::Begin("Test Window");
-        ImGui::Text("Hello World");
-        ImGui::DragFloat("demo slider",&f,0.05,0.0,1.0);
-        ImGui::ColorEdit3("background color",(float*)&programState->clearColor);
+        static float f = 0.0f;
+        ImGui::Begin("Hello window");
+        ImGui::Text("Hello text");
+        ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
+        ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
+        ImGui::DragFloat3("Backpack position", (float*)&programState->backpackPosition);
+        ImGui::DragFloat("Backpack scale", &programState->backpackScale, 0.05, 0.1, 4.0);
+
+        ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
+        ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
+        ImGui::DragFloat("pointLight.quadratic", &programState->pointLight.quadratic, 0.05, 0.0, 1.0);
+        ImGui::End();
+    }
+
+    {
+        ImGui::Begin("Camera info");
+        const Camera& c = programState->camera;
+        ImGui::Text("Camera position: (%f, %f, %f)", c.Position.x, c.Position.y, c.Position.z);
+        ImGui::Text("(Yaw, Pitch): (%f, %f)", c.Yaw, c.Pitch);
+        ImGui::Text("Camera front: (%f, %f, %f)", c.Front.x, c.Front.y, c.Front.z);
+        ImGui::Checkbox("Camera mouse update", &programState->CameraMouseMovementUpdateEnabled);
         ImGui::End();
     }
 
