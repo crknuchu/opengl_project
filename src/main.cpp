@@ -28,15 +28,26 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+struct PointLight {
+    glm::vec3 position;
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+
 int main()
 {
-
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "rg_projekat", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -48,7 +59,7 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); //camera goes crazy if this is set to GLFW_CURSOR_DISABLED
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -60,14 +71,22 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    Shader ourShader("resources/shaders/vertexShader.vs", "resources/shaders/fragmentShader.fs");
+    Shader ourShader("resources/shaders/1.model_loading.vs", "resources/shaders/1.model_loading.fs");
 
     Model ourModel(FileSystem::getPath("resources/objects/backpack/backpack.obj"));
 
+    PointLight pointLight;
+    pointLight.position = glm::vec3(4,4,0);
+    pointLight.ambient = glm::vec3(0.4,0.4,0.2);
+    pointLight.diffuse = glm::vec3(0.5,0.6,1.0);
+    pointLight.specular = glm::vec3(1.0);
+    pointLight.constant = 1.0;
+    pointLight.linear = 0.09;
+    pointLight.quadratic = 0.032;
+
     while (!glfwWindowShouldClose(window))
     {
-
-        float currentFrame = glfwGetTime();
+        float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
@@ -77,6 +96,14 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ourShader.use();
+
+        ourShader.setVec3("pointLight.position",pointLight.position);
+        ourShader.setVec3("pointLight.ambient",pointLight.ambient);
+        ourShader.setVec3("pointLight.diffuse",pointLight.diffuse);
+        ourShader.setVec3("pointLight.specular",pointLight.specular);
+        ourShader.setFloat("pointLight.constant",pointLight.constant);
+        ourShader.setFloat("pointLight.linear",pointLight.linear);
+        ourShader.setFloat("pointLight.quadratic",pointLight.quadratic);
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
@@ -92,6 +119,7 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
 
     glfwTerminate();
     return 0;
@@ -117,8 +145,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
     if (firstMouse)
     {
         lastX = xpos;
@@ -127,7 +158,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     }
 
     float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    float yoffset = lastY - ypos;
 
     lastX = xpos;
     lastY = ypos;
@@ -137,5 +168,5 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    camera.ProcessMouseScroll(yoffset);
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
