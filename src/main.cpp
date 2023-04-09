@@ -25,7 +25,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -48,6 +47,11 @@ struct ProgramState {
     bool ImGuiEnabled = false;
     glm::vec3 clearColor = glm::vec3(0);
 
+    Camera camera;
+
+    ProgramState()
+    : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
+
     void LoadFromDisk(std::string path);
     void SaveToDisk(std::string path);
 };
@@ -60,7 +64,6 @@ void ProgramState::LoadFromDisk(std::string path) {
             >> clearColor.g
             >> clearColor.b;
     }
-    std::cerr<<"AAAAAAAAAAAAAAAAAAAa";
 }
 
 void ProgramState::SaveToDisk(std::string path) {
@@ -69,7 +72,6 @@ void ProgramState::SaveToDisk(std::string path) {
         << clearColor.r << '\n'
         << clearColor.g << '\n'
         << clearColor.b;
-    std::cerr<<"BBBBBBBBBBBBBBBBB";
 }
 
 ProgramState* programState;
@@ -154,8 +156,8 @@ int main()
         ourShader.setFloat("pointLight.linear",pointLight.linear);
         ourShader.setFloat("pointLight.quadratic",pointLight.quadratic);
 
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = programState->camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
@@ -188,13 +190,13 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
+        programState->camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
+        programState->camera.ProcessKeyboard(BACKWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
+        programState->camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
+        programState->camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -220,12 +222,12 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastX = xpos;
     lastY = ypos;
     if(programState->ImGuiEnabled == false)
-        camera.ProcessMouseMovement(xoffset, yoffset);
+        programState->camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    camera.ProcessMouseScroll(static_cast<float>(yoffset));
+    programState->camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
 void DrawImGui(ProgramState* programState){
