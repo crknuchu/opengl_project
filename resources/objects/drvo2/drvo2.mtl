@@ -1,0 +1,24 @@
+# Blender 3.5.0 MTL File: 'None'
+# www.blender.org
+
+newmtl Bark_C
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd PineBark_diffuse.png
+map_Bump -bm 1.000000 PineBark_normal.png
+
+newmtl Tree_leaf
+Ns 110.103180
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+illum 2
+map_Kd Tree_Leaf_Diffuse-Tree_Leaf_opacity.png
+map_d Tree_Leaf_Diffuse-Tree_Leaf_opacity.png
+map_Bump -bm 1.000000 Tree_Leaf_Normal.png
